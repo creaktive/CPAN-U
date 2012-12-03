@@ -10,22 +10,15 @@ use Sort::Key::Top qw(rnkeytop);
 
 my $t0 = Benchmark->new;
 
-my %item;
-
-my $json = JSON::XS->new->canonical;
+my $json = JSON::XS->new->canonical->pretty;
 my $ua = LWP::UserAgent->new;
 
-my $n = 0;
+my (%user, %item);
 for my $user_id (get_user_ids()) {
     for my $item (get_user_favorites($user_id)) {
-        if (exists $item{$item}) {
-            vec($item{$item}, $n, 1) = 1;
-        } else {
-            $item{$item} = '';
-        }
+        ++$user{$user_id}->{$item};
+        $item{$item}->{$user_id} = $user{$user_id};
     }
-} continue {
-    ++$n;
 }
 
 say $json->encode(find_recommendations());
@@ -106,39 +99,38 @@ sub get_user_favorites {
 sub find_recommendations {
     my @res;
 
-    my @item = keys %item;
-    my @cosine_table;
-    for my $i (0 .. $#item) {
-        my $outer = $item[$i];
-        my %sim;
+    # For each item in product catalog, I1
+    while (my ($outer, $users) = each %item) {
+        my %stuff;
+        my $n = -1;
 
-        for my $j (0 .. $#item) {
-            my $inner = $item[$j];
+        # For each customer C who purchased I1
+        while (my ($user, $favorites) = each %{$users}) {
+            ++$n;
 
-            my $sim;
-            if ($i < $j and $sim = cosine_similarity(@item{$inner => $outer})) {
-                $cosine_table[$i][$j] = $sim;
-                $sim{$inner} = $sim;
-            } elsif ($i > $j and $sim = $cosine_table[$j][$i]) {
-                $sim{$inner} = $sim;
+            # For each item I2 purchased by customer C
+            for my $inner (keys %{$favorites}) {
+
+                # Record that a customer purchased I1 and I2
+                vec($stuff{$inner}, $n, 1) = 1;
             }
+        }
+
+        # For each item I2
+        my $outer_bv = delete $stuff{$outer};
+        my %sim;
+        while (my ($inner, $inner_bv) = each %stuff) {
+
+            # Compute the similarity between I1 and I2
+            my $sim = cosine_similarity($outer_bv => $inner_bv);
+            $sim{$inner} = $sim if $sim;
         }
 
         push @res => map +{
             distribution=> $outer,
             similar     => $_,
-            relevance   => $sim{$_},
+            relevance   => 0 + sprintf(q(%0.2f) => $sim{$_}),
         }, rnkeytop { $sim{$_} } 10 => keys %sim;
-
-        #push @res => {
-        #    _id => $outer,
-        #    recommendations => [
-        #        map +{
-        #            distribution=> $_,
-        #            similarity  => $sim{$_},
-        #        }, rnkeytop { $sim{$_} } 10 => keys %sim
-        #    ],
-        #} if %sim;
     }
 
     return { docs => \@res };
