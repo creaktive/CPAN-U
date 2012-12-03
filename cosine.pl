@@ -3,7 +3,6 @@ use common::sense;
 
 use Sort::Key::Top qw(rnkeytop);
 
-#=for comment
 my (%user, %item);
 while (<>) {
     chomp;
@@ -45,59 +44,6 @@ while (my ($outer, $users) = each %item) {
         say qq($outer\t$inner\n);
     }
 }
-#=cut
-
-=for comment
-sub _rnkeytop (&$@) {
-    my ($keyfn, $n, @data) = @_;
-    return grep { defined } (
-        map { $_->[0] }
-        sort { $b->[1] <=> $a->[1] or $a->[0] cmp $b->[0] }
-        map { [$_ => $keyfn->()] }
-            @data
-    ) [0 .. $n - 1];
-}
-
-my %item;
-my $last_user = '';
-my $n = 0;
-while (<>) {
-    chomp;
-    my ($user, $item) = split /\t/x;
-
-    if ($last_user ne $user) {
-        $last_user = $user;
-        ++$n;
-    }
-
-    $item{$item} //= '';
-    vec($item{$item}, $n, 1) = 1;
-}
-
-my @item = sort keys %item;
-my @cosine_table;
-for my $i (0 .. $#item) {
-    my $outer = $item[$i];
-    my %sim;
-
-    for my $j (0 .. $#item) {
-        my $inner = $item[$j];
-
-        my $sim;
-        if ($i < $j and $sim = cosine_similarity(@item{$inner => $outer})) {
-            $cosine_table[$i][$j] = $sim;
-            $sim{$inner} = $sim;
-        } elsif ($i > $j and $sim = $cosine_table[$j][$i]) {
-            $sim{$inner} = $sim;
-        }
-    }
-
-    for my $inner (rnkeytop { $sim{$_} } 10 => keys %sim) {
-        #printf qq(%0.2f\t%-40s\t%-40s\n), $sim{$inner}, $outer, $inner;
-        print qq($outer\t$inner\n);
-    }
-}
-=cut
 
 sub cosine_similarity {
     my ($a, $b) = @_;
