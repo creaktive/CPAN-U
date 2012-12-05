@@ -97,6 +97,7 @@ sub get_user_favorites {
 }
 
 sub find_recommendations {
+    my $timestamp = time;
     my @res;
 
     # For each item in product catalog, I1
@@ -128,6 +129,7 @@ sub find_recommendations {
 
         push @res => map +{
             distribution=> $outer,
+            timestamp   => $timestamp,
             similar     => $_,
             relevance   => 0 + sprintf(q(%0.2f) => $sim{$_}),
         }, rnkeytop { $sim{$_} } 10 => keys %sim;
