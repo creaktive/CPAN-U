@@ -2,25 +2,61 @@
 <html>
     <head>
         <title></title>
-        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
-        <style>
-            .similar ul {
-                margin: 0;
-                padding: 0;
-	            list-style-type: none;
-                list-style-image: none;
+
+        <style type="text/css">
+            body {
+                padding-top: 60px;
+                padding-bottom: 40px;
             }
-            .similar li {
-                display: inline;
-            }
+
+            .distribution {
+                font-size: 1.5em;
         </style>
+
+        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+
+        <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
+        <!--[if lt IE 9]>
+        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+        <![endif]-->
     </head>
     <body>
-        <h1>MetaCPAN recent</h1>
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="navbar-inner">
+                <div class="container">
+                    <a class="brand" href="#">Project name</a>
+                    <div class="nav-collapse collapse">
+                        <ul class="nav">
+                            <li class="active"><a href="#">Home</a></li>
+                            <li><a href="#about">About</a></li>
+                            <li><a href="#contact">Contact</a></li>
+                        </ul>
+                        <form class="navbar-form pull-right">
+                            <input class="span2" type="text" placeholder="PAUSE account">
+                            <button type="submit" class="btn">Recommend</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-        <div id="container">
-            <ul id="recent_modules">
-            </ul>
+        <div class="container">
+
+            <!-- Main hero unit for a primary marketing message or call to action -->
+            <div class="hero-unit">
+                <h1>MetaCPAN recent</h1>
+                <p>This is a template for a simple marketing or informational website. It includes a large callout called the hero unit and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
+                <p><a class="btn btn-primary btn-large">Learn more &raquo;</a></p>
+            </div>
+
+            <ol id="recent_modules"></ol>
+
+            <hr>
+
+            <footer>
+                <p>&copy; Company 2012</p>
+            </footer>
+
         </div>
 
         <script src="jquery-1.8.3.min.js"></script>
@@ -28,15 +64,56 @@
         <script>
             !function ($) {
                 $(function(){
-                    function on_metacpan (data) {
-                        var dists = data.facets.leaderboard.terms.map(function (obj) {
+                    function cpan_module_name(str) {
+                        return str.replace(new RegExp('-', 'g'), '::');
+                    }
+
+                    var dists = [];
+                    function on_leaderboard (data) {
+                        dists = data.facets.leaderboard.terms.map(function (obj) {
                             return obj.term;
                         });
+
+                        $.ajax({
+                            type: 'POST',
+                            url: 'http://api.metacpan.org/v0/release/_search',
+                            data: {
+                                source: JSON.stringify({
+                                    "query": {
+                                        "terms": { "release.distribution": dists }
+                                    },
+                                    "filter": {
+                                        "term" : {
+                                            "release.status": "latest"
+                                        }
+                                    },
+                                    "fields": [ "distribution", "abstract", "version" ]
+                                })
+                            }
+                        }).done(on_releases);
+                    }
+
+                    function on_releases (data) {
+                        var metadata = {};
+                        for (var i in data.hits.hits) {
+                            var row = data.hits.hits[i].fields;
+                            metadata[row.distribution] = row;
+                        }
 
                         for (var i in dists) {
                             var dist = dists[i];
 
-                            $('#recent_modules').append('<li id="dist-' + dist + '">' + dist + '<ul class="similar"></ul></li>');
+                            $('#recent_modules').append(
+                                '<li id="dist-' + dist + '">'
+                                + '<a class="distribution" href="https://metacpan.org/release/'
+                                + dist
+                                + '" target="_blank"><b>'
+                                + cpan_module_name(dist)
+                                + '</b></a>'
+                                + ' <small>v' + metadata[dist].version + '</small>'
+                                + '<p>' + metadata[dist].abstract + '</p>'
+                                + '<p class="similar">Similar:</p></li>'
+                            );
 
                             $.ajax({
                                 type: 'GET',
@@ -55,8 +132,18 @@
                         for (var i in data.rows) {
                             var row = data.rows[i];
 
+                            var tags = [];
                             for (var similar in row.value) {
-                                $('#dist-' + row.key + ' .similar').append('<li>' + similar + '</li>');
+                                tags.push(similar);
+                            }
+                            for (var i in tags.sort()) {
+                                $('#dist-' + row.key + ' .similar').append(
+                                    ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/'
+                                    + tags[i]
+                                    + '" target="_blank">'
+                                    + cpan_module_name(tags[i])
+                                    + '</a>'
+                                );
                             }
                         }
                     }
@@ -80,7 +167,7 @@
                                 "size": 0
                             })
                         }
-                    }).done(on_metacpan);
+                    }).done(on_leaderboard);
                 })
             }(window.jQuery)
         </script>
