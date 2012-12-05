@@ -6,41 +6,46 @@
     </head>
     <body>
         <h1>MetaCPAN recent</h1>
-        <script src="http://code.jquery.com/jquery-latest.js"></script>
+
+        <div id="container">
+            <ul id="recent_modules">
+            </ul>
+        </div>
+
+        <script src="jquery-1.8.3.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
         <script>
             !function ($) {
                 $(function(){
-                    var dists;
-
                     function on_metacpan (data) {
-                        dists = data.hits.hits.map(function (obj) {
+                        var dists = data.hits.hits.map(function (obj) {
                             return obj.fields.distribution;
                         });
 
-                        $.ajax({
-                            type: 'GET',
-                            url: 'http://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
-                            dataType: 'jsonp',
-                            data: {
-                                group: true,
-                                keys: '["' + dists.join('","') + '"]',
-                                stale: 'ok'
-                            }
-                        }).done(on_similar);
+                        for (var i in dists) {
+                            var dist = dists[i];
+
+                            $('#recent_modules').append('<li id="dist-' + dist + '">' + dist + '<ul class="similar"></ul></li>');
+
+                            $.ajax({
+                                type: 'GET',
+                                url: 'http://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
+                                dataType: 'jsonp',
+                                data: {
+                                    group: true,
+                                    key: '"' + dist + '"',
+                                    stale: 'ok'
+                                }
+                            }).done(on_similar);
+                        }
                     }
 
                     function on_similar (data) {
-                        var similar = {};
                         for (var i in data.rows) {
                             var row = data.rows[i];
-                            similar[row.key] = row.value; 
-                        }
 
-                        for (var i in dists) {
-                            var dist = dists[i];
-                            if (typeof(similar[dist]) != 'undefined') {
-                                console.log('%s %o', dist, similar[dist]);
+                            for (var similar in row.value) {
+                                $('#dist-' + row.key + ' .similar').append('<li>' + similar + '</li>');
                             }
                         }
                     }
@@ -51,7 +56,7 @@
                         data: {
                             fields: 'distribution',
                             filter: 'status.latest',
-                            size: 100,
+                            size: 50,
                             sort: 'date:desc'
                         }
                     }).done(on_metacpan);
