@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
+        <meta charset="utf-8">
         <title></title>
 
         <style type="text/css">
@@ -11,13 +12,18 @@
 
             .distribution {
                 font-size: 1.5em;
+            }
+
+            #for-user {
+                line-height: 2.15em;
+            }
         </style>
 
-        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link href="css/bootstrap.min.css" type="text/css" rel="stylesheet" media="screen">
 
         <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
         <!--[if lt IE 9]>
-        <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+            <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
         <![endif]-->
     </head>
     <body>
@@ -31,8 +37,8 @@
                             <li><a href="#about">About</a></li>
                             <li><a href="#contact">Contact</a></li>
                         </ul>
-                        <form class="navbar-form pull-right">
-                            <input class="span2" type="text" placeholder="PAUSE account">
+                        <form id="query-recommendation" class="navbar-form pull-right">
+                            <input id="pause" class="span2" type="text" placeholder="PAUSE account" pattern="[A-Za-z]*">
                             <button type="submit" class="btn">Recommend</button>
                         </form>
                     </div>
@@ -49,7 +55,12 @@
                 <p><a class="btn btn-primary btn-large">Learn more &raquo;</a></p>
             </div>
 
-            <ol id="recent_modules"></ol>
+            <p id="for-user">
+                Type your
+                <a href="http://pause.perl.org/" target="_blank">PAUSE</a>
+                account above and hit the <em>Recommend</em> button!
+            </p>
+            <ol id="recent-modules"></ol>
 
             <hr>
 
@@ -103,7 +114,7 @@
                         for (var i in dists) {
                             var dist = dists[i];
 
-                            $('#recent_modules').append(
+                            $('#recent-modules').append(
                                 '<li id="dist-' + dist + '">'
                                 + '<a class="distribution" href="https://metacpan.org/release/'
                                 + dist
@@ -112,7 +123,7 @@
                                 + '</b></a>'
                                 + ' <small>v' + metadata[dist].version + '</small>'
                                 + '<p>' + metadata[dist].abstract + '</p>'
-                                + '<p class="similar">Similar:</p></li>'
+                                + '<p class="similar">Loading...</p></li>'
                             );
 
                             $.ajax({
@@ -128,15 +139,36 @@
                         }
                     }
 
+                    function rank_sort(keys, vals) {
+                        return keys.sort(function (b, a) {
+                            var delta = vals[a] - vals[b];
+                            if (delta) {
+                                return delta;
+                            } else if (a > b) {
+                                return -1;
+                            } else if (a < b) {
+                                return 1;
+                            } else {
+                                return 0;
+                            }
+                        });
+                    };
+
                     function on_similar (data) {
                         for (var i in data.rows) {
                             var row = data.rows[i];
 
+                            var rank = {};
                             var tags = [];
                             for (var similar in row.value) {
+                                rank[similar] = row.value[similar];
                                 tags.push(similar);
                             }
-                            for (var i in tags.sort()) {
+                            tags = rank_sort(tags, rank).splice(0, 10).sort();
+
+                            $('#dist-' + row.key + ' .similar').html('Similar:');
+                            for (var i in tags) {
+                                //console.log("%s %s", tags[i], rank[tags[i]]);
                                 $('#dist-' + row.key + ' .similar').append(
                                     ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/'
                                     + tags[i]
@@ -168,6 +200,88 @@
                             })
                         }
                     }).done(on_leaderboard);
+
+                    function on_user_recommendation (data) {
+                        var count = 0;
+                        var bag = {};
+                        var own = [];
+
+                        for (var i in data.rows) {
+                            count++;
+                            own.push(data.rows[i].key);
+                            for (var similar in data.rows[i].value) {
+                                if (typeof(bag[similar]) == 'undefined') {
+                                    bag[similar] = 1;
+                                } else {
+                                    bag[similar]++;
+                                }
+                            }
+                        }
+
+                        for (var i in own) {
+                            bag[own[i]] = 0;
+                        }
+
+                        var top_dists = [];
+                        for (var similar in bag) {
+                            if (bag[similar] > 0) {
+                                top_dists.push(similar);
+                            }
+                        }
+                        top_dists = rank_sort(top_dists, bag).splice(0, 10).sort();
+
+                        $('#for-user').html('Recommendation based on ' + count + ' favorited distributions.<br>');
+                        for (var i in top_dists) {
+                            //console.log("%s %s", top_dists[i], bag[top_dists[i]]);
+                            $('#for-user').append(
+                                ' <a class="btn btn-small btn-inverse" type="button" href="https://metacpan.org/release/'
+                                + top_dists[i]
+                                + '" target="_blank">'
+                                + cpan_module_name(top_dists[i])
+                                + '</a>'
+                            );
+                        }
+                    }
+
+                    function on_user_favorites (data) {
+                        var favs;
+                        try {
+                            favs = data.favorite.hits.hits.map(function (obj) {
+                                return obj._source.distribution;
+                            });
+                        } catch(e) {
+                            $('#for-user').html('<span class="btn btn-warning btn-block">User has no registered favorites!</span>');
+                            return;
+                        }
+
+                        $.ajax({
+                            type: 'GET',
+                            url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
+                            dataType: 'jsonp',
+                            data: {
+                                group: true,
+                                keys: '["' + favs.join('","') + '"]',
+                                stale: 'ok'
+                            }
+                        }).done(on_user_recommendation);
+                    }
+
+                    $('#query-recommendation').submit(function () {
+                        var pause = $('#pause').val().toUpperCase();
+
+                        $('#for-user').html('Processing...');
+                        $.ajax({
+                            type: 'POST',
+                            url: 'https://api.metacpan.org/v0/author/' + pause,
+                            data: {
+                                join: 'favorite'
+                            }
+                        })
+                            .fail(function (jqXHR, textStatus, errorThrown) {
+                                $('#for-user').html('<span class="btn btn-danger btn-block">Error: ' + errorThrown + '</span>');
+                            })
+                            .done(on_user_favorites);
+                    });
                 })
             }(window.jQuery)
         </script>
