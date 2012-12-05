@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    </head>
+    <body>
+        <h1>MetaCPAN recent</h1>
+        <script src="http://code.jquery.com/jquery-latest.js"></script>
+        <script src="js/bootstrap.min.js"></script>
+        <script>
+            !function ($) {
+                $(function(){
+                    var dists;
+
+                    function on_metacpan (data) {
+                        dists = data.hits.hits.map(function (obj) {
+                            return obj.fields.distribution;
+                        });
+
+                        $.ajax({
+                            type: 'GET',
+                            url: 'http://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
+                            dataType: 'jsonp',
+                            data: {
+                                group: true,
+                                keys: '["' + dists.join('","') + '"]',
+                                stale: 'ok'
+                            }
+                        }).done(on_similar);
+                    }
+
+                    function on_similar (data) {
+                        var similar = {};
+                        for (var i in data.rows) {
+                            var row = data.rows[i];
+                            similar[row.key] = row.value; 
+                        }
+
+                        for (var i in dists) {
+                            var dist = dists[i];
+                            if (typeof(similar[dist]) != 'undefined') {
+                                console.log('%s %o', dist, similar[dist]);
+                            }
+                        }
+                    }
+
+                    $.ajax({
+                        type: 'GET',
+                        url: 'http://api.metacpan.org/v0/release/_search',
+                        data: {
+                            fields: 'distribution',
+                            filter: 'status.latest',
+                            size: 100,
+                            sort: 'date:desc'
+                        }
+                    }).done(on_metacpan);
+                })
+            }(window.jQuery)
+        </script>
+    </body>
+</html>
