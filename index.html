@@ -76,7 +76,7 @@
 
                         $.ajax({
                             type: 'POST',
-                            url: 'http://api.metacpan.org/v0/release/_search',
+                            url: 'https://api.metacpan.org/v0/release/_search',
                             data: {
                                 source: JSON.stringify({
                                     "query": {
@@ -117,7 +117,7 @@
 
                             $.ajax({
                                 type: 'GET',
-                                url: 'http://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
+                                url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
                                 dataType: 'jsonp',
                                 data: {
                                     group: true,
@@ -150,7 +150,7 @@
 
                     $.ajax({
                         type: 'POST',
-                        url: 'http://api.metacpan.org/v0/favorite/_search',
+                        url: 'https://api.metacpan.org/v0/favorite/_search',
                         data: {
                             source: JSON.stringify({
                                 "query": {
