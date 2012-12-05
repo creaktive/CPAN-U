@@ -73,8 +73,9 @@
         <script src="jquery-1.8.3.min.js"></script>
         <script src="js/bootstrap.min.js"></script>
         <script>
-            !function ($) {
-                $(function(){
+            (function ($) {
+                'use strict';
+                $(function () {
                     function cpan_module_name(str) {
                         return str.replace(new RegExp('-', 'g'), '::');
                     }
@@ -111,19 +112,19 @@
                             metadata[row.distribution] = row;
                         }
 
-                        for (var i in dists) {
-                            var dist = dists[i];
+                        for (var j in dists) {
+                            var dist = dists[j];
 
                             $('#recent-modules').append(
-                                '<li id="dist-' + dist + '">'
-                                + '<a class="distribution" href="https://metacpan.org/release/'
-                                + dist
-                                + '" target="_blank"><b>'
-                                + cpan_module_name(dist)
-                                + '</b></a>'
-                                + ' <small>v' + metadata[dist].version + '</small>'
-                                + '<p>' + metadata[dist].abstract + '</p>'
-                                + '<p class="similar">Loading...</p></li>'
+                                '<li id="dist-' + dist + '">' +
+                                '<a class="distribution" href="https://metacpan.org/release/' +
+                                dist +
+                                '" target="_blank"><b>' +
+                                cpan_module_name(dist) +
+                                '</b></a>' +
+                                ' <small>v' + metadata[dist].version + '</small>' +
+                                '<p>' + metadata[dist].abstract + '</p>' +
+                                '<p class="similar">Loading...</p></li>'
                             );
 
                             $.ajax({
@@ -152,7 +153,7 @@
                                 return 0;
                             }
                         });
-                    };
+                    }
 
                     function on_similar (data) {
                         for (var i in data.rows) {
@@ -167,14 +168,14 @@
                             tags = rank_sort(tags, rank).splice(0, 10).sort();
 
                             $('#dist-' + row.key + ' .similar').html('Similar:');
-                            for (var i in tags) {
+                            for (var j in tags) {
                                 //console.log("%s %s", tags[i], rank[tags[i]]);
                                 $('#dist-' + row.key + ' .similar').append(
-                                    ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/'
-                                    + tags[i]
-                                    + '" target="_blank">'
-                                    + cpan_module_name(tags[i])
-                                    + '</a>'
+                                    ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/' +
+                                    tags[j] +
+                                    '" target="_blank">' +
+                                    cpan_module_name(tags[j]) +
+                                    '</a>'
                                 );
                             }
                         }
@@ -210,7 +211,7 @@
                             count++;
                             own.push(data.rows[i].key);
                             for (var similar in data.rows[i].value) {
-                                if (typeof(bag[similar]) == 'undefined') {
+                                if (typeof(bag[similar]) === 'undefined') {
                                     bag[similar] = 1;
                                 } else {
                                     bag[similar]++;
@@ -218,27 +219,27 @@
                             }
                         }
 
-                        for (var i in own) {
-                            bag[own[i]] = 0;
+                        for (var j in own) {
+                            bag[own[j]] = 0;
                         }
 
                         var top_dists = [];
-                        for (var similar in bag) {
-                            if (bag[similar] > 0) {
-                                top_dists.push(similar);
+                        for (var word in bag) {
+                            if (bag[word] > 0) {
+                                top_dists.push(word);
                             }
                         }
                         top_dists = rank_sort(top_dists, bag).splice(0, 10).sort();
 
                         $('#for-user').html('Recommendation based on ' + count + ' favorited distributions.<br>');
-                        for (var i in top_dists) {
+                        for (var k in top_dists) {
                             //console.log("%s %s", top_dists[i], bag[top_dists[i]]);
                             $('#for-user').append(
-                                ' <a class="btn btn-small btn-inverse" type="button" href="https://metacpan.org/release/'
-                                + top_dists[i]
-                                + '" target="_blank">'
-                                + cpan_module_name(top_dists[i])
-                                + '</a>'
+                                ' <a class="btn btn-small btn-inverse" type="button" href="https://metacpan.org/release/' +
+                                top_dists[k] +
+                                '" target="_blank">' +
+                                cpan_module_name(top_dists[k]) +
+                                '</a>'
                             );
                         }
                     }
@@ -282,8 +283,8 @@
                             })
                             .done(on_user_favorites);
                     });
-                })
-            }(window.jQuery)
+                });
+            })(window.jQuery);
         </script>
     </body>
 </html>
