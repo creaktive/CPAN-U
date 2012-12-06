@@ -54,7 +54,7 @@
 
                 $.ajax({
                     type: 'GET',
-                    url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
+                    url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/top/recommend',
                     dataType: 'jsonp',
                     data: {
                         group: true,
@@ -66,32 +66,17 @@
         }
 
         function on_similar (data) {
-            function rank_sort (b, a) {
-                var delta = rank[a] - rank[b];
-                if (delta) {
-                    return delta;
-                } else if (a > b) {
-                    return -1;
-                } else if (a < b) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-
             for (var i = 0; i < data.rows.length; i++) {
                 var row = data.rows[i];
 
-                var rank = {};
                 var tags = [];
                 for (var similar in row.value) {
                     if (row.value.hasOwnProperty(similar)) {
-                        rank[similar] = row.value[similar];
                         tags.push(similar);
                     }
                 }
 
-                tags = tags.sort(rank_sort).splice(0, 10).sort();
+                tags = tags.sort();
 
                 $('#dist-' + row.key + ' .similar').html('Similar:');
                 for (var j = 0; j < tags.length; j++) {
