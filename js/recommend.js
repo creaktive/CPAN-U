@@ -69,25 +69,17 @@
             for (var i = 0; i < data.rows.length; i++) {
                 var row = data.rows[i];
 
-                var tags = [];
+                $('#dist-' + row.key + ' .similar').html('Similar:');
                 for (var similar in row.value) {
                     if (row.value.hasOwnProperty(similar)) {
-                        tags.push(similar);
+                        $('#dist-' + row.key + ' .similar').append(
+                            ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/' +
+                            similar +
+                            '" target="_blank">' +
+                            cpan_module_name(similar) +
+                            '</a>'
+                        );
                     }
-                }
-
-                tags = tags.sort();
-
-                $('#dist-' + row.key + ' .similar').html('Similar:');
-                for (var j = 0; j < tags.length; j++) {
-                    //console.log("%s %s", tags[i], rank[tags[i]]);
-                    $('#dist-' + row.key + ' .similar').append(
-                        ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/' +
-                        tags[j] +
-                        '" target="_blank">' +
-                        cpan_module_name(tags[j]) +
-                        '</a>'
-                    );
                 }
             }
         }
