@@ -6,11 +6,8 @@
         }
 
         var dists = [];
-        function on_leaderboard (data) {
-            dists = data.facets.leaderboard.terms.map(function (obj) {
-                return obj.term;
-            });
-
+        function process_dists (data) {
+            dists = data;
             $.ajax({
                 type: 'POST',
                 url: 'https://api.metacpan.org/v0/release/_search',
@@ -30,6 +27,14 @@
             }).done(on_releases);
         }
 
+        function on_leaderboard (data) {
+            process_dists(
+                data.facets.leaderboard.terms.map(function (obj) {
+                    return obj.term;
+                })
+            );
+        }
+
         function on_releases (data) {
             var metadata = {};
             for (var i = 0; i < data.hits.hits.length; i++) {
@@ -37,32 +42,48 @@
                 metadata[row.distribution] = row;
             }
 
+            $('#leaderboard-modules').html('');
             for (var j = 0; j < dists.length; j++) {
                 var dist = dists[j];
 
-                $('#leaderboard-modules').append(
-                    '<li id="dist-' + dist + '">' +
-                    '<a class="distribution" href="https://metacpan.org/release/' +
-                    dist +
-                    '" target="_blank"><b>' +
-                    cpan_module_name(dist) +
-                    '</b></a>' +
-                    ' <small>v' + metadata[dist].version + '</small>' +
-                    '<p>' + metadata[dist].abstract + '</p>' +
-                    '<p class="similar">Loading...</p></li>'
-                );
-
-                $.ajax({
-                    type: 'GET',
-                    url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/top/recommend',
-                    cache: true,
-                    dataType: 'jsonp',
-                    data: {
-                        group: true,
-                        key: '"' + dist + '"',
-                        stale: 'ok'
+                if (metadata.hasOwnProperty(dist)) {
+                    var abstract = '';
+                    if (typeof(metadata[dist].abstract) !== 'undefined') {
+                        abstract = '<p>' + metadata[dist].abstract + '</p>';
                     }
-                }).done(on_similar);
+
+                    $('#leaderboard-modules').append(
+                        '<li id="dist-' + dist + '">' +
+                        '<a class="distribution" href="https://metacpan.org/release/' +
+                        dist +
+                        '" target="_blank"><b>' +
+                        cpan_module_name(dist) +
+                        '</b></a>' +
+                        ' <small>v' + metadata[dist].version + '</small>' +
+                        abstract +
+                        '<p class="similar">Loading...</p></li>'
+                    );
+
+                    $.ajax({
+                        type: 'GET',
+                        url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/top/recommend',
+                        cache: true,
+                        dataType: 'jsonp',
+                        data: {
+                            group: true,
+                            key: '"' + dist + '"',
+                            stale: 'ok'
+                        }
+                    }).done(on_similar);
+                } else {
+                    $('#leaderboard-modules').append(
+                        '<li id="dist-' + dist + '">' +
+                        '<a class="distribution" target="_blank"><b>' +
+                        cpan_module_name(dist) +
+                        '</b></a>' +
+                        '<p class="similar">Module/distribuition not found</p></li>'
+                    );
+                }
             }
         }
 
@@ -83,28 +104,34 @@
                     }
                 }
             }
+
+            $('button').attr("disabled", false);
         }
 
-        $.ajax({
-            type: 'POST',
-            url: 'https://api.metacpan.org/v0/favorite/_search',
-            data: {
-                source: JSON.stringify({
-                    "query": {
-                        "match_all": {}
-                    },
-                    "facets": {
-                        "leaderboard": {
-                            "terms": {
-                                "field": "distribution",
-                                "size": 10
+        function process_leaderboard () {
+            $('button').attr("disabled", true);
+
+            $.ajax({
+                type: 'POST',
+                url: 'https://api.metacpan.org/v0/favorite/_search',
+                data: {
+                    source: JSON.stringify({
+                        "query": {
+                            "match_all": {}
+                        },
+                        "facets": {
+                            "leaderboard": {
+                                "terms": {
+                                    "field": "distribution",
+                                    "size": 10
+                                }
                             }
-                        }
-                    },
-                    "size": 0
-                })
-            }
-        }).done(on_leaderboard);
+                        },
+                        "size": 0
+                    })
+                }
+            }).done(on_leaderboard);
+        }
 
         var pause_account = '';
         var favs = [];
@@ -124,6 +151,7 @@
                 favs.length +
                 ' favorited distributions:<br>'
             );
+
             for (var i = 0; i < top_dists.length; i++) {
                 var name = top_dists[i];
                 $('#for-user').append(
@@ -134,6 +162,8 @@
                     '</a>'
                 );
             }
+            
+            $('button').attr("disabled", false);
         }
 
         function on_user_favorites (data) {
@@ -159,23 +189,49 @@
             }).done(on_user_recommendation);
         }
 
-        $('#query-recommendation').submit(function () {
-            pause_account = $('#pause_account').val().toUpperCase();
+        $('#process-leaderboard').click(function () {
+            process_leaderboard();
+        });
 
-            $('#for-user').html('Processing...');
-            $.ajax({
-                type: 'POST',
-                url: 'https://api.metacpan.org/v0/author/' + pause_account,
-                data: {
-                    join: 'favorite'
-                }
-            })
-                .fail(function (jqXHR, textStatus, errorThrown) {
-                    $('#for-user').html('<span class="btn btn-danger btn-block">Error: ' + errorThrown + '</span>');
+        $('#query-recommendation').submit(function () {
+            var query = $('#cpanu-query').val();
+            query = query.replace(/[\,'"\s]+/g, ' ');
+
+            function query_as_dists () {
+                var query_list = $.unique(
+                    $.grep(query.split(/\s+/), function (str) {
+                        return str.length;
+                    })
+                );
+
+                process_dists(query_list);
+            }
+
+            if (query.match(new RegExp('^[A-Za-z]+$'))) {
+                pause_account = query.toUpperCase();
+                $.ajax({
+                    type: 'POST',
+                    url: 'https://api.metacpan.org/v0/author/' + pause_account,
+                    data: {
+                        join: 'favorite'
+                    }
                 })
-                .done(on_user_favorites);
+                    .fail(function () {
+                        query_as_dists();
+                    })
+                    .done(function (data) {
+                        $('button').attr("disabled", true);
+                        $('#for-user').html('Processing...');
+                        
+                        on_user_favorites(data);
+                    });
+            } else {
+                query_as_dists();
+            }
 
             return false;
         });
+
+        process_leaderboard();
     });
 })(window.jQuery);
