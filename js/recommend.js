@@ -40,7 +40,7 @@
             for (var j = 0; j < dists.length; j++) {
                 var dist = dists[j];
 
-                $('#recent-modules').append(
+                $('#leaderboard-modules').append(
                     '<li id="dist-' + dist + '">' +
                     '<a class="distribution" href="https://metacpan.org/release/' +
                     dist +
@@ -66,6 +66,19 @@
         }
 
         function on_similar (data) {
+            function rank_sort (b, a) {
+                var delta = rank[a] - rank[b];
+                if (delta) {
+                    return delta;
+                } else if (a > b) {
+                    return -1;
+                } else if (a < b) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+
             for (var i = 0; i < data.rows.length; i++) {
                 var row = data.rows[i];
 
@@ -78,18 +91,7 @@
                     }
                 }
 
-                tags = tags.sort(function (b, a) {
-                    var delta = rank[a] - rank[b];
-                    if (delta) {
-                        return delta;
-                    } else if (a > b) {
-                        return -1;
-                    } else if (a < b) {
-                        return 1;
-                    } else {
-                        return 0;
-                    }
-                }).splice(0, 10).sort();
+                tags = tags.sort(rank_sort).splice(0, 10).sort();
 
                 $('#dist-' + row.key + ' .similar').html('Similar:');
                 for (var j = 0; j < tags.length; j++) {
@@ -193,6 +195,8 @@
                     $('#for-user').html('<span class="btn btn-danger btn-block">Error: ' + errorThrown + '</span>');
                 })
                 .done(on_user_favorites);
+
+            return false;
         });
     });
 })(window.jQuery);

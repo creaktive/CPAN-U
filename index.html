@@ -2,23 +2,12 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title></title>
+        <title>CPAN::U</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <meta name="description" content="">
+        <meta name="author" content="Stanislaw Pusep">
 
-        <style type="text/css">
-            body {
-                padding-top: 60px;
-                padding-bottom: 40px;
-            }
-
-            .distribution {
-                font-size: 1.5em;
-            }
-
-            #for-user {
-                line-height: 2.15em;
-            }
-        </style>
-
+        <link href="css/recommend.css" type="text/css" rel="stylesheet" media="screen">
         <link href="css/bootstrap.min.css" type="text/css" rel="stylesheet" media="screen">
 
         <!-- HTML5 shim, for IE6-8 support of HTML5 elements -->
@@ -30,16 +19,15 @@
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
                 <div class="container">
-                    <a class="brand" href="#">Project name</a>
+                    <a class="brand" href="#">CPAN::U</a>
                     <div class="nav-collapse collapse">
                         <ul class="nav">
                             <li class="active"><a href="#">Home</a></li>
-                            <li><a href="#about">About</a></li>
-                            <li><a href="#contact">Contact</a></li>
+                            <li><a href="#leaderboard-modules">Leaderboard</a></li>
                         </ul>
                         <form id="query-recommendation" class="navbar-form pull-right">
                             <input id="pause_account" class="span2" type="text" placeholder="PAUSE account" pattern="[A-Za-z]*">
-                            <button type="submit" class="btn">Recommend</button>
+                            <button type="submit" class="btn">use CPAN::U</button>
                         </form>
                     </div>
                 </div>
@@ -50,25 +38,33 @@
 
             <!-- Main hero unit for a primary marketing message or call to action -->
             <div class="hero-unit">
-                <h1>MetaCPAN recent</h1>
-                <p>This is a template for a simple marketing or informational website. It includes a large callout called the hero unit and three supporting pieces of content. Use it as a starting point to create something more unique.</p>
-                <p><a class="btn btn-primary btn-large">Learn more &raquo;</a></p>
+                <h1>CPAN::U</h1>
+                <p>
+                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                </p>
+                <p><a class="btn btn-primary btn-large" href="https://metacpan.org/favorite/leaderboard" target="_blank">View MetaCPAN Leaderboard</a></p>
             </div>
 
             <p id="for-user">
                 Type your
                 <a href="http://pause.perl.org/" target="_blank">PAUSE</a>
-                account above and hit the <em>Recommend</em> button!
+                account above and hit the <em>use CPAN::U</em> button!
             </p>
 
             <hr>
 
-            <ol id="recent-modules"></ol>
+            <ol id="leaderboard-modules"></ol>
 
             <hr>
 
             <footer>
-                <p>&copy; Company 2012</p>
+                <p>
+                    Written by <a href="https://coderwall.com/creaktive">Stanislaw Pusep</a>
+                    | Powered by <a href="http://perl.org/">Perl</a>,
+                    <a href="https://metacpan.org">MetaCPAN</a>,
+                    <a href="https://couchdb.apache.org/">CouchDB</a>
+                    and <a href="https://cloudant.com/">Cloudant</a>
+                </p>
             </footer>
 
         </div>
