@@ -55,6 +55,7 @@
                 $.ajax({
                     type: 'GET',
                     url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/top/recommend',
+                    cache: true,
                     dataType: 'jsonp',
                     data: {
                         group: true,
@@ -148,6 +149,7 @@
             $.ajax({
                 type: 'GET',
                 url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/user/recommend',
+                cache: true,
                 dataType: 'jsonp',
                 data: {
                     group: true,
