@@ -1,0 +1,13 @@
+{
+   "views" : {
+      "recommend" : {
+         "map" : "            function (doc) {\n                val = {};\n                val[doc.similar] = doc.relevance;\n                emit(doc.distribution, val);\n            }\n",
+         "reduce" : "            function (keys, values, rereduce) {\n                var rv = {};\n                for (i in values) {\n                    var value = values[i];\n                    for (k in value) {\n                        rv[k] = value[k];\n                    }\n                }\n                return rv;\n            }\n"
+      }
+   },
+   "lists" : {
+      "user" : "        function (head, req) {\n            var stop = {};\n\n            try {\n                var own = eval(req.query['keys']);\n                for (var i = 0; i < own.length; i++) {\n                    stop[own[i]] = 1;\n                }\n            } catch(e) {\n            }\n\n            var bag = {};\n            var row;\n            while (row = getRow()) {\n                for (var similar in row.value) {\n                    if (row.value.hasOwnProperty(similar) && typeof(stop[similar]) === 'undefined') {\n                        if (typeof(bag[similar]) === 'undefined') {\n                            bag[similar] = 1;\n                        } else {\n                            bag[similar]++;\n                        }\n                    }\n                }\n            }\n\n            function rank_sort(keys, vals) {\n                return keys.sort(function (b, a) {\n                    var delta = vals[a] - vals[b];\n                    if (delta) {\n                        return delta;\n                    } else if (a > b) {\n                        return -1;\n                    } else if (a < b) {\n                        return 1;\n                    } else {\n                        return 0;\n                    }\n                });\n            }\n\n            var top_dists = [];\n            for (var word in bag) {\n                if (bag.hasOwnProperty(word) && bag[word] > 0) {\n                    top_dists.push(word);\n                }\n            }\n\n            var json = JSON.stringify({\n                \"rows\": rank_sort(top_dists, bag).map(function (name) {\n                    return {\n                        \"key\": name,\n                        \"value\": bag[name]\n                    };\n                })\n            });\n\n            if (typeof(req.query['callback']) === 'undefined') {\n                send(json + \"\\n\");\n            } else {\n                send(req.query.callback + '(' + json + \");\\n\");\n            }\n        }\n"
+   },
+   "_id" : "_design/recommend",
+   "_rev" : "33-39efd8b4752c53d80494be236b75f826"
+}
