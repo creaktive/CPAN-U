@@ -11,6 +11,7 @@
             $.ajax({
                 type: 'POST',
                 url: 'https://api.metacpan.org/v0/release/_search',
+                dataType: 'json',
                 data: {
                     source: JSON.stringify({
                         "query": {
@@ -114,6 +115,7 @@
             $.ajax({
                 type: 'POST',
                 url: 'https://api.metacpan.org/v0/favorite/_search',
+                dataType: 'json',
                 data: {
                     source: JSON.stringify({
                         "query": {
@@ -212,6 +214,7 @@
                 $.ajax({
                     type: 'POST',
                     url: 'https://api.metacpan.org/v0/author/' + pause_account,
+                    dataType: 'json',
                     data: {
                         join: 'favorite'
                     }
