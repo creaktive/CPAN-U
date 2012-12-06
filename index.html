@@ -38,7 +38,7 @@
                             <li><a href="#contact">Contact</a></li>
                         </ul>
                         <form id="query-recommendation" class="navbar-form pull-right">
-                            <input id="pause" class="span2" type="text" placeholder="PAUSE account" pattern="[A-Za-z]*">
+                            <input id="pause_account" class="span2" type="text" placeholder="PAUSE account" pattern="[A-Za-z]*">
                             <button type="submit" class="btn">Recommend</button>
                         </form>
                     </div>
@@ -60,6 +60,9 @@
                 <a href="http://pause.perl.org/" target="_blank">PAUSE</a>
                 account above and hit the <em>Recommend</em> button!
             </p>
+
+            <hr>
+
             <ol id="recent-modules"></ol>
 
             <hr>
@@ -140,21 +143,6 @@
                         }
                     }
 
-                    function rank_sort(keys, vals) {
-                        return keys.sort(function (b, a) {
-                            var delta = vals[a] - vals[b];
-                            if (delta) {
-                                return delta;
-                            } else if (a > b) {
-                                return -1;
-                            } else if (a < b) {
-                                return 1;
-                            } else {
-                                return 0;
-                            }
-                        });
-                    }
-
                     function on_similar (data) {
                         for (var i = 0; i < data.rows.length; i++) {
                             var row = data.rows[i];
@@ -167,7 +155,19 @@
                                     tags.push(similar);
                                 }
                             }
-                            tags = rank_sort(tags, rank).splice(0, 10).sort();
+
+                            tags = tags.sort(function (b, a) {
+                                var delta = rank[a] - rank[b];
+                                if (delta) {
+                                    return delta;
+                                } else if (a > b) {
+                                    return -1;
+                                } else if (a < b) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            }).splice(0, 10).sort();
 
                             $('#dist-' + row.key + ' .similar').html('Similar:');
                             for (var j = 0; j < tags.length; j++) {
@@ -204,64 +204,49 @@
                         }
                     }).done(on_leaderboard);
 
+                    var pause_account = '';
+                    var favs = [];
                     function on_user_recommendation (data) {
-                        var count = 0;
-                        var bag = {};
-                        var own = [];
+                        //console.log('%o', data.rows);
+                        var top_dists = data.rows.splice(0, 10).map(function (obj) {
+                            return obj.key;
+                        }).sort();
 
-                        for (var i = 0; i < data.rows.length; i++) {
-                            count++;
-                            own.push(data.rows[i].key);
-                            for (var similar in data.rows[i].value) {
-                                if (data.rows[i].value.hasOwnProperty(similar)) {
-                                    if (typeof(bag[similar]) === 'undefined') {
-                                        bag[similar] = 1;
-                                    } else {
-                                        bag[similar]++;
-                                    }
-                                }
-                            }
-                        }
-
-                        for (var j = 0; j < own.length; j++) {
-                            bag[own[j]] = 0;
-                        }
-
-                        var top_dists = [];
-                        for (var word in bag) {
-                            if (bag.hasOwnProperty(word) && bag[word] > 0) {
-                                top_dists.push(word);
-                            }
-                        }
-                        top_dists = rank_sort(top_dists, bag).splice(0, 10).sort();
-
-                        $('#for-user').html('Recommendation based on ' + count + ' favorited distributions.<br>');
-                        for (var k = 0; k < top_dists.length; k++) {
-                            //console.log("%s %s", top_dists[i], bag[top_dists[i]]);
+                        $('#for-user').html(
+                            'Recommendation for ' +
+                            '<a href="https://metacpan.org/author/' +
+                            pause_account +
+                            '" target="_blank">' +
+                            pause_account +
+                            '</a>, based on ' +
+                            favs.length +
+                            ' favorited distributions:<br>'
+                        );
+                        for (var i = 0; i < top_dists.length; i++) {
+                            var name = top_dists[i];
                             $('#for-user').append(
                                 ' <a class="btn btn-small btn-inverse" type="button" href="https://metacpan.org/release/' +
-                                top_dists[k] +
+                                name +
                                 '" target="_blank">' +
-                                cpan_module_name(top_dists[k]) +
+                                cpan_module_name(name) +
                                 '</a>'
                             );
                         }
                     }
 
                     function on_user_favorites (data) {
-                        var favs;
                         try {
                             favs = data.favorite.hits.hits.map(function (obj) {
                                 return obj._source.distribution;
                             });
                         } catch(e) {
-                            $('#for-user').html('<span class="btn btn-warning btn-block">User has no registered favorites!</span>');
+                            $('#for-user').html('<span class="btn btn-warning btn-block">user has no registered favorites!</span>');
                             return;
                         }
 
                         $.ajax({
                             type: 'GET',
-                            url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_view/recommend',
+                            url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/user/recommend',
                             dataType: 'jsonp',
                             data: {
                                 group: true,
@@ -272,12 +257,12 @@
                     }
 
                     $('#query-recommendation').submit(function () {
-                        var pause = $('#pause').val().toUpperCase();
+                        pause_account = $('#pause_account').val().toUpperCase();
 
                         $('#for-user').html('Processing...');
                         $.ajax({
                             type: 'POST',
-                            url: 'https://api.metacpan.org/v0/author/' + pause,
+                            url: 'https://api.metacpan.org/v0/author/' + pause_account,
                             data: {
                                 join: 'favorite'
                             }
