@@ -1,7 +1,7 @@
 (function ($) {
     'use strict';
     $(function () {
-        function cpan_module_name(str) {
+        function cpan_module_name (str) {
             return str.replace(new RegExp('-', 'g'), '::');
         }
 
