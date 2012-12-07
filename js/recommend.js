@@ -137,12 +137,7 @@
 
         var pause_account = '';
         var favs = [];
-        function on_user_recommendation (data) {
-            //console.log('%o', data.rows);
-            var top_dists = data.rows.splice(0, 10).map(function (obj) {
-                return obj.key;
-            }).sort();
-
+        function on_user_recommendation (top_dists) {
             $('#for-user').html(
                 'Recommendation for ' +
                 '<a href="https://metacpan.org/author/' +
@@ -169,17 +164,69 @@
         }
 
         function on_user_favorites () {
-            $.ajax({
-                type: 'GET',
-                url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/user/recommend',
-                cache: true,
-                dataType: 'jsonp',
-                data: {
-                    group: true,
-                    keys: '["' + favs.join('","') + '"]',
-                    stale: 'ok'
-                }
-            }).done(on_user_recommendation);
+            var batch = $.merge([], favs);
+            var queue = [];
+            var step = 10;
+            for (var i = 0; i < favs.length; i += step) {
+                queue.push(batch.splice(0, step));
+            }
+
+            var done = queue.length;
+            var bag = {};
+            var tags = [];
+            $(queue).each(function () {
+                var keys = '["' + this.join('","') + '"]';
+                $.ajax({
+                    type: 'GET',
+                    url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/user/recommend',
+                    cache: true,
+                    dataType: 'jsonp',
+                    data: {
+                        group: true,
+                        keys: keys,
+                        stale: 'ok'
+                    }
+                })
+                    .fail(function () {
+                        done--;
+                    })
+                    .done(function (data) {
+                        done--;
+
+                        try {
+                            data.rows.map(function (obj) {
+                                if ($.inArray(obj.key, favs) === -1) {
+                                    if (typeof(bag[obj.key]) === 'undefined') {
+                                        bag[obj.key] = obj.value;
+                                        tags.push(obj.key);
+                                    } else {
+                                        bag[obj.key] += obj.value;
+                                    }
+                                    return;
+                                }
+                            }).sort();
+                        } catch (e) {
+                        }
+
+                        if (done === 0) {
+                            tags = tags.sort(function (b, a) {
+                                var delta = bag[a] - bag[b];
+                                if (delta) {
+                                    return delta;
+                                } else if (a > b) {
+                                    return -1;
+                                } else if (a < b) {
+                                    return 1;
+                                } else {
+                                    return 0;
+                                }
+                            }).splice(0, 10).sort();
+
+                            //console.log('%o', tags);
+                            on_user_recommendation(tags);
+                        }
+                    });
+            });
         }
 
         $('#process-leaderboard').click(function () {
