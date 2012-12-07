@@ -2,9 +2,9 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>CPAN::U</title>
+        <title>CPAN::U beta</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <meta name="description" content="">
+        <meta name="description" content="'CPAN for You' is a collaborative filter based recommendation system for Perl developers">
         <meta name="author" content="Stanislaw Pusep">
 
         <link href="css/recommend.css" type="text/css" rel="stylesheet" media="screen">
@@ -19,7 +19,7 @@
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
                 <div class="container">
-                    <a class="brand" href="#">CPAN::U</a>
+                    <a class="brand" href="#">CPAN::U beta</a>
                     <div class="nav-collapse collapse">
                         <ul class="nav">
                             <li class="active"><a href="#">Home</a></li>
@@ -40,9 +40,24 @@
 
             <!-- Main hero unit for a primary marketing message or call to action -->
             <div class="hero-unit">
-                <h1>CPAN::U</h1>
+                <h1>CPAN::U beta</h1>
                 <p>
-                    Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                    <em>CPAN for You</em> is a collaborative filter based recommendation system for Perl developers.
+                    It gathers data from
+                    <button class="btn btn-primary btn-mini">&nbsp;&nbsp;&nbsp;&nbsp;++</button>
+                    button counts across the
+                    <a href="https://metacpan.org/" target="_blank">MetaCPAN</a>
+                    and builds a predictive model of modules often used together by CPAN authors.
+                    If you are a CPAN author by yourself, CPAN::U can build a suggestion list based on:
+                    <ul>
+                        <li>The modules you tagged as favorites</li>
+                        <li>Favorite counts of your own modules</li>
+                        <li>Modules you use as dependencies</li>
+                    </ul>
+                    To query CPAN::U database, input module name (<code>Devel::REPL</code>),
+                    a list of modules (<code>Data::Printer, Imager</code>)
+                    or author's ID (<code>DOY</code>).
+                    By default, you can
                 </p>
                 <p><button id="process-leaderboard" class="btn btn-primary btn-large">View MetaCPAN Leaderboard</button></p>
             </div>
