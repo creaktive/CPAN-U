@@ -151,7 +151,7 @@
                 pause_account +
                 '</a>, based on ' +
                 favs.length +
-                ' favorited distributions:<br>'
+                ' preferred distributions:<br>'
             );
 
             for (var i = 0; i < top_dists.length; i++) {
@@ -168,16 +168,7 @@
             $('button').attr("disabled", false);
         }
 
-        function on_user_favorites (data) {
-            try {
-                favs = data.favorite.hits.hits.map(function (obj) {
-                    return obj._source.distribution;
-                });
-            } catch(e) {
-                $('#for-user').html('<span class="btn btn-warning btn-block">user has no registered favorites!</span>');
-                return;
-            }
-
+        function on_user_favorites () {
             $.ajax({
                 type: 'GET',
                 url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/user/recommend',
@@ -222,11 +213,65 @@
                     .fail(function () {
                         query_as_dists();
                     })
-                    .done(function (data) {
+                    .done(function (author_favorite_data) {
                         $('button').attr("disabled", true);
                         $('#for-user').html('Processing...');
-                        
-                        on_user_favorites(data);
+
+                        try {
+                            favs = author_favorite_data.favorite.hits.hits.map(function (obj) {
+                                return obj._source.distribution;
+                            });
+                        } catch (e) {
+                        }
+
+                        $.ajax({
+                            type: 'POST',
+                            url: 'https://api.metacpan.org/v0/release/_search',
+                            dataType: 'json',
+                            data: {
+                                source: JSON.stringify({
+                                   "fields": [
+                                      "release.dependency.module"
+                                   ],
+                                   "query": {
+                                      "filtered": {
+                                         "filter": {
+                                            "and": [
+                                               { "term": { "author": pause_account } },
+                                               { "term": { "release.maturity": "released" } },
+                                               { "term": { "release.status": "latest" } }
+                                            ]
+                                         },
+                                         "query": {
+                                            "match_all": {}
+                                         }
+                                      }
+                                   },
+                                   "size": 5000
+                                })
+                            }
+                        }).done(function (author_deps_data) {
+                            var everything = [];
+                            try {
+                                everything = author_deps_data.hits.hits.map(function (list) {
+                                    return list.fields['dependency.module'];
+                                });
+                            } catch (e) {
+                            }
+
+                            var deps = [];
+                            for (var i = 0; i < everything.length; i++) {
+                                for (var j = 0; j < everything[i].length; j++) {
+                                    deps.push(everything[i][j]);
+                                }
+                            }
+
+                            $.merge(favs, deps);
+                            $.unique(favs);
+
+                            //console.log('%o', favs);
+                            on_user_favorites();
+                        });
                     });
             } else {
                 query_as_dists();
