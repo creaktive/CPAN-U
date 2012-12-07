@@ -203,75 +203,51 @@
             if (query.match(new RegExp('^[A-Za-z]+$'))) {
                 pause_account = query.toUpperCase();
                 $.ajax({
-                    type: 'POST',
-                    url: 'https://api.metacpan.org/v0/author/' + pause_account,
-                    dataType: 'json',
-                    data: {
-                        join: 'favorite'
-                    }
+                    type: 'GET',
+                    url: 'https://api.metacpan.org/v0/author/' + pause_account + '?join=favorite&join=release',
+                    dataType: 'json'
                 })
                     .fail(function () {
                         query_as_dists();
                     })
-                    .done(function (author_favorite_data) {
+                    .done(function (data) {
                         $('button').attr("disabled", true);
                         $('#for-user').html('Processing...');
 
+                        var favorites = [];
                         try {
-                            favs = author_favorite_data.favorite.hits.hits.map(function (obj) {
+                            favorites = data.favorite.hits.hits.map(function (obj) {
                                 return obj._source.distribution;
                             });
                         } catch (e) {
                         }
 
-                        $.ajax({
-                            type: 'POST',
-                            url: 'https://api.metacpan.org/v0/release/_search',
-                            dataType: 'json',
-                            data: {
-                                source: JSON.stringify({
-                                   "fields": [
-                                      "release.dependency.module"
-                                   ],
-                                   "query": {
-                                      "filtered": {
-                                         "filter": {
-                                            "and": [
-                                               { "term": { "author": pause_account } },
-                                               { "term": { "release.maturity": "released" } },
-                                               { "term": { "release.status": "latest" } }
-                                            ]
-                                         },
-                                         "query": {
-                                            "match_all": {}
-                                         }
-                                      }
-                                   },
-                                   "size": 5000
-                                })
-                            }
-                        }).done(function (author_deps_data) {
-                            var everything = [];
-                            try {
-                                everything = author_deps_data.hits.hits.map(function (list) {
-                                    return list.fields['dependency.module'];
-                                });
-                            } catch (e) {
-                            }
-
-                            var deps = [];
-                            for (var i = 0; i < everything.length; i++) {
-                                for (var j = 0; j < everything[i].length; j++) {
-                                    deps.push(everything[i][j]);
+                        var dependencies = [];
+                        var releases = [];
+                        try {
+                            releases = data.release.hits.hits.map(function (obj) {
+                                for (var i = 0; i < obj._source.dependency.length; i++) {
+                                    dependencies.push(obj._source.dependency[i].module.replace(new RegExp('::', 'g'), '-'));
                                 }
+                                return obj._source.distribution;
+                            });
+                        } catch (e) {
+                        }
+
+                        var dups = $.merge($.merge($.merge([], releases), dependencies), favorites).sort();
+                        favs = [];
+                        for (var j = 0; j < dups.length; j++) {
+                            if (dups[j] !== favs[favs.length - 1]) {
+                                favs.push(dups[j]);
                             }
+                        }
 
-                            $.merge(favs, deps);
-                            $.unique(favs);
-
-                            //console.log('%o', favs);
+                        //console.log('%o', favs);
+                        if (favs.length) {
                             on_user_favorites();
-                        });
+                        } else {
+                            $('#for-user').html('<span class="btn btn-warning btn-block">user has no preferred distributions!</span>');
+                        }
                     });
             } else {
                 query_as_dists();
