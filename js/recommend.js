@@ -5,6 +5,10 @@
             return str.replace(new RegExp('-', 'g'), '::');
         }
 
+        function cpan_dist_name (str) {
+            return str.replace(new RegExp('::', 'g'), '-');
+        }
+
         var dists = [];
         function process_dists (data) {
             dists = data;
@@ -220,7 +224,7 @@
                                 } else {
                                     return 0;
                                 }
-                            }).splice(0, 10).sort();
+                            }).splice(0, 20).sort();
 
                             //console.log('%o', tags);
                             on_user_recommendation(tags);
@@ -238,11 +242,13 @@
             query = query.replace(/[\,'"\s]+/g, ' ');
 
             function query_as_dists () {
-                var query_list = $.unique(
-                    $.grep(query.split(/\s+/), function (str) {
+                var query_list = $.grep(
+                    query.split(/\s+/), function (str) {
                         return str.length;
-                    })
-                );
+                    }
+                ).map(function (str) {
+                    return cpan_dist_name(str);
+                });
 
                 process_dists(query_list);
             }
@@ -274,7 +280,7 @@
                         try {
                             releases = data.release.hits.hits.map(function (obj) {
                                 for (var i = 0; i < obj._source.dependency.length; i++) {
-                                    dependencies.push(obj._source.dependency[i].module.replace(new RegExp('::', 'g'), '-'));
+                                    dependencies.push(cpan_dist_name(obj._source.dependency[i].module));
                                 }
                                 return obj._source.distribution;
                             });
