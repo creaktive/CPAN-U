@@ -1,6 +1,16 @@
 (function ($) {
     'use strict';
     $(function () {
+        function lock_input () {
+            $('button').attr("disabled", true);
+            $('#loading').attr("style", "display: inline");
+        }
+
+        function unlock_input () {
+            $('button').attr("disabled", false);
+            $('#loading').attr("style", "display: hidden");
+        }
+
         function cpan_module_name (str) {
             return str.replace(new RegExp('-', 'g'), '::');
         }
@@ -110,11 +120,11 @@
                 }
             }
 
-            $('button').attr("disabled", false);
+            unlock_input();
         }
 
         function process_leaderboard () {
-            $('button').attr("disabled", true);
+            lock_input();
 
             $.ajax({
                 type: 'POST',
@@ -164,7 +174,7 @@
                 );
             }
             
-            $('button').attr("disabled", false);
+            unlock_input();
         }
 
         function on_user_favorites () {
@@ -253,6 +263,7 @@
                 process_dists(query_list);
             }
 
+            lock_input();
             if (query.match(new RegExp('^[A-Za-z]+$'))) {
                 pause_account = query.toUpperCase();
                 $.ajax({
@@ -264,7 +275,6 @@
                         query_as_dists();
                     })
                     .done(function (data) {
-                        $('button').attr("disabled", true);
                         $('#for-user').html('Processing...');
 
                         var favorites = [];

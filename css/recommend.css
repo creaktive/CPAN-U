@@ -10,3 +10,8 @@ body {
 #for-user, .similar {
     line-height: 2.15em;
 }
+
+#loading {
+    vertical-align: bottom;
+    display: none;
+}
