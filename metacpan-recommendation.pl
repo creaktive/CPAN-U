@@ -123,8 +123,11 @@ sub find_recommendations {
         while (my ($inner, $inner_bv) = each %stuff) {
 
             # Compute the similarity between I1 and I2
-            my $sim = cosine_similarity($outer_bv => $inner_bv);
-            $sim{$inner} = $sim if $sim;
+            if (my $sim = cosine_similarity($outer_bv => $inner_bv)) {
+                $sim{$inner} = (50 >= keys %{$item{$inner}})
+                    ? $sim
+                    : 0;
+            }
         }
 
         push @res => map +{
