@@ -51,6 +51,10 @@
         }
 
         function on_releases (data) {
+            function tracker_release (obj) {
+                window._gaq.push(['_trackEvent', 'distribuition', 'click', $(obj).attr('href')]);
+            }
+
             var metadata = {};
             for (var i = 0; i < data.hits.hits.length; i++) {
                 var row = data.hits.hits[i].fields;
@@ -79,6 +83,8 @@
                         '<p class="similar">Loading...</p></li>'
                     );
 
+                    $('#leaderboard-modules #dist-' + dist + ' a.distribution').click(tracker_release);
+
                     $.ajax({
                         type: 'GET',
                         url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/top/recommend',
@@ -103,6 +109,10 @@
         }
 
         function on_similar (data) {
+            function tracker_similar (obj) {
+                window._gaq.push(['_trackEvent', 'similar', 'click', $(obj).attr('href')]);
+            }
+
             for (var i = 0; i < data.rows.length; i++) {
                 var row = data.rows[i];
 
@@ -110,7 +120,7 @@
                 for (var similar in row.value) {
                     if (row.value.hasOwnProperty(similar)) {
                         $('#dist-' + row.key + ' .similar').append(
-                            ' <a class="btn btn-small btn-info" type="button" href="https://metacpan.org/release/' +
+                            ' <a class="btn btn-small btn-info" href="https://metacpan.org/release/' +
                             similar +
                             '" target="_blank">' +
                             cpan_module_name(similar) +
@@ -118,6 +128,8 @@
                         );
                     }
                 }
+
+                $('#dist-' + row.key + ' .similar .btn').click(tracker_similar);
             }
 
             unlock_input();
@@ -166,14 +178,18 @@
             for (var i = 0; i < top_dists.length; i++) {
                 var name = top_dists[i];
                 $('#for-user').append(
-                    ' <a class="btn btn-small btn-inverse" type="button" href="https://metacpan.org/release/' +
+                    ' <a class="btn btn-small btn-inverse" href="https://metacpan.org/release/' +
                     name +
                     '" target="_blank">' +
                     cpan_module_name(name) +
                     '</a>'
                 );
             }
-            
+
+            $('#for-user .btn').click(function () {
+                window._gaq.push(['_trackEvent', 'recommendation', 'click', $(this).attr('href')]);
+            });
+
             unlock_input();
         }
 
@@ -252,6 +268,8 @@
             query = query.replace(/[\,'"\s]+/g, ' ');
 
             function query_as_dists () {
+                window._gaq.push(['_trackEvent', 'query', 'dist', query]);
+
                 var query_list = $.grep(
                     query.split(/\s+/), function (str) {
                         return str.length;
@@ -275,6 +293,8 @@
                         query_as_dists();
                     })
                     .done(function (data) {
+                        window._gaq.push(['_trackEvent', 'query', 'user', pause_account]);
+
                         $('#for-user').html('Processing...');
 
                         var favorites = [];
