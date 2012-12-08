@@ -7,6 +7,6 @@ body {
     font-size: 1.5em;
 }
 
-#for-user {
+#for-user, .similar {
     line-height: 2.15em;
 }
