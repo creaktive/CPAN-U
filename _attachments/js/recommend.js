@@ -68,7 +68,7 @@
                 if (metadata.hasOwnProperty(dist)) {
                     var abstract = '';
                     if (typeof(metadata[dist].abstract) !== 'undefined') {
-                        abstract = '<p>' + metadata[dist].abstract + '</p>';
+                        abstract = '<p class="lead">' + metadata[dist].abstract + '</p>';
                     }
 
                     $('#leaderboard-modules').append(
@@ -78,24 +78,24 @@
                         '" target="_blank"><b>' +
                         cpan_module_name(dist) +
                         '</b></a>' +
-                        ' <small>v' + metadata[dist].version + '</small>' +
+                        ' v' + metadata[dist].version +
                         abstract +
                         '<p class="similar">Loading...</p></li>'
                     );
 
                     $('#leaderboard-modules #dist-' + dist + ' a.distribution').click(tracker_release);
 
-                    $.ajax({
-                        type: 'GET',
-                        url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/top/recommend',
-                        cache: true,
-                        dataType: 'jsonp',
-                        data: {
+                    $db.list(
+                        'recommend/top',
+                        'recommend',
+                        {
                             group: true,
-                            key: '"' + dist + '"',
+                            key: dist,
                             stale: 'ok'
+                        }, {
+                            success: on_similar
                         }
-                    }).done(on_similar);
+                    );
                 } else {
                     $('#leaderboard-modules').append(
                         '<li id="dist-' + dist + '">' +
@@ -116,7 +116,7 @@
             for (var i = 0; i < data.rows.length; i++) {
                 var row = data.rows[i];
 
-                $('#dist-' + row.key + ' .similar').html('Similar:');
+                $('#dist-' + row.key + ' .similar').html('People who liked this module also liked:');
                 for (var similar in row.value) {
                     if (row.value.hasOwnProperty(similar)) {
                         $('#dist-' + row.key + ' .similar').append(
@@ -205,59 +205,59 @@
             var bag = {};
             var tags = [];
             $(queue).each(function () {
-                var keys = '["' + this.join('","') + '"]';
-                $.ajax({
-                    type: 'GET',
-                    url: 'https://creaktive.cloudant.com/metacpan-recommendation/_design/recommend/_list/user/recommend',
-                    cache: true,
-                    dataType: 'jsonp',
-                    data: {
+                $db.list(
+                    'recommend/user',
+                    'recommend',
+                    {
                         group: true,
-                        keys: keys,
+                        keys: this,
                         stale: 'ok'
-                    }
-                })
-                    .fail(function () {
-                        done--;
-                    })
-                    .done(function (data) {
-                        done--;
+                    }, {
+                        error: function () {
+                            done--;
+                        },
+                        success: function (data) {
+                            done--;
 
-                        try {
-                            data.rows.map(function (obj) {
-                                if ($.inArray(obj.key, favs) === -1) {
-                                    if (typeof(bag[obj.key]) === 'undefined') {
-                                        bag[obj.key] = obj.value;
-                                        tags.push(obj.key);
-                                    } else {
-                                        bag[obj.key] += obj.value;
+                            try {
+                                data.rows.map(function (obj) {
+                                    if ($.inArray(obj.key, favs) === -1) {
+                                        if (typeof(bag[obj.key]) === 'undefined') {
+                                            bag[obj.key] = obj.value;
+                                            tags.push(obj.key);
+                                        } else {
+                                            bag[obj.key] += obj.value;
+                                        }
+                                        return;
                                     }
-                                    return;
-                                }
-                            }).sort();
-                        } catch (e) {
-                        }
+                                }).sort();
+                            } catch (e) {
+                            }
 
-                        if (done === 0) {
-                            tags = tags.sort(function (b, a) {
-                                var delta = bag[a] - bag[b];
-                                if (delta) {
-                                    return delta;
-                                } else if (a > b) {
-                                    return -1;
-                                } else if (a < b) {
-                                    return 1;
-                                } else {
-                                    return 0;
-                                }
-                            }).splice(0, 20).sort();
+                            if (done === 0) {
+                                tags = tags.sort(function (b, a) {
+                                    var delta = bag[a] - bag[b];
+                                    if (delta) {
+                                        return delta;
+                                    } else if (a > b) {
+                                        return -1;
+                                    } else if (a < b) {
+                                        return 1;
+                                    } else {
+                                        return 0;
+                                    }
+                                }).splice(0, 20).sort();
 
-                            //console.log('%o', tags);
-                            on_user_recommendation(tags);
+                                //console.log('%o', tags);
+                                on_user_recommendation(tags);
+                            }
                         }
-                    });
+                    }
+                );
             });
         }
+
+        var $db = $.couch.db('metacpan-recommendation');
 
         $('#process-leaderboard').click(function () {
             process_leaderboard();

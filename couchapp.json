@@ -1,0 +1,5 @@
+{
+    "name" : "CPAN::U",
+    "description" : "'CPAN for You' is a collaborative filter based recommendation system for Perl developers",
+    "index" : "index.html"
+}

@@ -41,7 +41,7 @@ while (my ($outer, $users) = each %item) {
 
     for my $inner (rnkeytop { $sim{$_} } 10 => keys %sim) {
         #printf qq(%-40s\t%-40s\t%0.2f\n), $outer, $inner, $sim{$inner};
-        say qq($outer\t$inner\n);
+        say qq($outer\t$inner);
     }
 }
 
