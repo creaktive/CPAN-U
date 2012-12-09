@@ -1,0 +1,10 @@
+[
+    {
+        "from" : "",
+        "to" : "index.html"
+    },
+    {
+        "from" : "_list/*",
+        "to" : "_list/*"
+    }
+]
