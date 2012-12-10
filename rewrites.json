@@ -4,7 +4,23 @@
         "to" : "index.html"
     },
     {
-        "from" : "_list/*",
-        "to" : "_list/*"
+        "from" : "favicon.ico",
+        "to" : "favicon.ico"
+    },
+    {
+        "from" : "css/*",
+        "to" : "css/*"
+    },
+    {
+        "from" : "img/*",
+        "to" : "img/*"
+    },
+    {
+        "from" : "js/*",
+        "to" : "js/*"
+    },
+    {
+        "from" : "metacpan-recommendation/*",
+        "to" : "../../*"
     }
 ]
