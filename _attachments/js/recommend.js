@@ -91,7 +91,7 @@
                         {
                             group: true,
                             key: dist,
-                            stale: 'ok'
+                            stale: 'update_after'
                         }, {
                             success: on_similar
                         }
@@ -211,7 +211,7 @@
                     {
                         group: true,
                         keys: this,
-                        stale: 'ok'
+                        stale: 'update_after'
                     }, {
                         error: function () {
                             done--;
