@@ -2,7 +2,7 @@
 <html>
     <head>
         <meta charset="utf-8">
-        <title>CPAN::U &beta;</title>
+        <title>CPAN::U experiment</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <meta name="description" content="'CPAN for You' is a collaborative filter based recommendation system for Perl developers">
         <meta name="author" content="Stanislaw Pusep">
@@ -24,7 +24,7 @@
         <div class="navbar navbar-inverse navbar-fixed-top">
             <div class="navbar-inner">
                 <div class="container">
-                    <a class="brand" href="#">CPAN::U &beta;</a>
+                    <a class="brand" href="#">CPAN::U experiment</a>
                     <div class="nav-collapse collapse">
                         <ul class="nav">
                             <li class="active"><a href="#">Home</a></li>
@@ -34,6 +34,8 @@
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Support <b class="caret"></b></a>
                                 <ul class="dropdown-menu">
                                     <li class="nav-header">Like CPAN::U?</li>
+                                    <li><a href="https://github.com/creaktive/CPAN-U" target="_blank">Fork it on GitHub</a></li>
+                                    <li class="divider"></li>
                                     <li><a href="https://coderwall.com/creaktive"><img alt="Endorse creaktive on Coderwall" src="http://api.coderwall.com/creaktive/endorsecount.png" /></a></li>
                                     <li class="divider"></li>
                                     <li style="text-align: center">
@@ -48,7 +50,7 @@
                         </ul>
                         <form id="query-recommendation" class="navbar-form pull-right">
                             <img id="loading" src="img/ajax-loader.gif" width="28" height="28" alt="Loading..." title="Loading..." />
-                            <input id="cpanu-query" class="span3" type="text" placeholder="author/module" pattern="[A-Za-z0-9\:\-\_\,'&quot;\s]+">
+                            <input id="cpanu-query" class="span2" type="text" placeholder="author/module" pattern="[A-Za-z0-9\:\-\_\,'&quot;\s]+">
                             <button type="submit" class="btn">use CPAN::U</button>
                         </form>
                     </div>
@@ -56,17 +58,28 @@
             </div>
         </div>
 
-        <a href="https://github.com/creaktive"><img style="position: absolute; top: 40px; left: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_left_gray_6d6d6d.png" alt="Fork me on GitHub"></a>
-
         <div class="container">
 
             <!-- Main hero unit for a primary marketing message or call to action -->
             <div class="hero-unit">
-                <h1>CPAN::U &beta;</h1>
+                <h1>CPAN::U experiment</h1>
+
                 <p>
                     <br>Ever lost yourself wandering in a vastness of CPAN modules?
                     <br><em>CPAN for You</em> allows you to tap into the collective wisdom of Perl community!
                 </p>
+
+                <!-- AddThis Button BEGIN -->
+                <div class="addthis_toolbox addthis_default_style ">
+                    <a class="addthis_button_preferred_1"></a>
+                    <a class="addthis_button_preferred_2"></a>
+                    <a class="addthis_button_preferred_3"></a>
+                    <a class="addthis_button_preferred_4"></a>
+                    <a class="addthis_button_compact"></a>
+                    <a class="addthis_counter addthis_bubble_style"></a>
+                </div>
+                <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=creaktive"></script>
+                <!-- AddThis Button END -->
             </div>
 
             <div class="row">
@@ -162,16 +175,5 @@
                     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
             })();
         </script>
-
-        <!-- AddThis Button BEGIN -->
-        <div class="addthis_toolbox addthis_floating_style addthis_counter_style" style="right:20px;top:60px;">
-            <a class="addthis_button_facebook_like" fb:like:layout="box_count"></a>
-            <a class="addthis_button_tweet" tw:count="vertical"></a>
-            <a class="addthis_button_google_plusone" g:plusone:size="tall"></a>
-            <a class="addthis_counter"></a>
-        </div>
-        <!-- script type="text/javascript">var addthis_config = {"data_track_addressbar":true};</script -->
-        <script type="text/javascript" src="//s7.addthis.com/js/300/addthis_widget.js#pubid=creaktive"></script>
-        <!-- AddThis Button END -->
     </body>
 </html>
