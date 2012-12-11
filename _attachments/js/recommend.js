@@ -263,6 +263,33 @@
             process_leaderboard();
         });
 
+        $('#cpanu-query').typeahead({
+            items: 10,
+            minLength: 2,
+            source: function (query, process) {
+                return $.ajax({
+                    type: 'GET',
+                    url: 'https://api.metacpan.org/v0/search/autocomplete',
+                    dataType: 'json',
+                    data: {
+                        q: query,
+                        size: 10
+                    }
+                }).done(function (data) {
+                    var res = [];
+
+                    try {
+                        res = data.hits.hits.map(function (obj) {
+                            return cpan_module_name(obj.fields.distribution);
+                        });
+                    } catch (e) {
+                    }
+
+                    return process(res);
+                });
+            }
+        });
+
         $('#query-recommendation').submit(function () {
             var query = $('#cpanu-query').val();
             query = query.replace(/[\,'"\s]+/g, ' ');
