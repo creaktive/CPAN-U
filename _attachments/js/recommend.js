@@ -272,7 +272,7 @@
                     url: 'https://api.metacpan.org/v0/search/autocomplete',
                     dataType: 'json',
                     data: {
-                        q: query,
+                        q: cpan_dist_name(query),
                         size: 10
                     }
                 }).done(function (data) {
