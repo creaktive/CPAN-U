@@ -29,20 +29,31 @@
                 data: {
                     source: JSON.stringify({
                         "query": {
-                            "terms": { "release.distribution": dists }
+                            "terms": { "distribution": dists }
                         },
                         "filter": {
                             "term" : {
                                 "release.status": "latest"
                             }
                         },
-                        "fields": [ "distribution", "abstract", "version" ]
+                        "fields": [ "distribution", "abstract", "version" ],
+                        "size": 5000
                     })
                 }
             }).done(on_releases);
         }
 
         function on_leaderboard (data) {
+            $('#alert').append(
+                '<div class="alert fade in">' +
+                '<button type="button" class="close" data-dismiss="alert">×</button>' +
+                'Displaying modules from <a href="https://metacpan.org/favorite/leaderboard" target="_blank">MetaCPAN Leaderboard</a>. ' +
+                'Use the <strong>Recommend</strong> button to query specific modules and your own CPAN ID ' +
+                '(a.k.a. <a href="http://pause.perl.org/" target="_blank">PAUSE</a> account)' +
+                '</div>'
+            );
+            $('.alert').alert();
+
             process_dists(
                 data.facets.leaderboard.terms.map(function (obj) {
                     return obj.term;
@@ -106,6 +117,8 @@
                     );
                 }
             }
+
+            unlock_input();
         }
 
         function on_similar (data) {
@@ -131,8 +144,6 @@
 
                 $('#dist-' + row.key + ' .similar .btn').click(tracker_similar);
             }
-
-            unlock_input();
         }
 
         function process_leaderboard () {
@@ -163,35 +174,6 @@
 
         var pause_account = '';
         var favs = [];
-        function on_user_recommendation (top_dists) {
-            $('#for-user').html(
-                'Recommendation for ' +
-                '<a href="https://metacpan.org/author/' +
-                pause_account +
-                '" target="_blank">' +
-                pause_account +
-                '</a>, based on ' +
-                favs.length +
-                ' preferred distributions:<br>'
-            );
-
-            for (var i = 0; i < top_dists.length; i++) {
-                var name = top_dists[i];
-                $('#for-user').append(
-                    ' <a class="btn btn-small btn-inverse" href="https://metacpan.org/release/' +
-                    name +
-                    '" target="_blank">' +
-                    cpan_module_name(name) +
-                    '</a>'
-                );
-            }
-
-            $('#for-user .btn').click(function () {
-                window._gaq.push(['_trackEvent', 'recommendation', 'click', $(this).attr('href')]);
-            });
-
-            unlock_input();
-        }
 
         function on_user_favorites () {
             var batch = $.merge([], favs);
@@ -235,6 +217,18 @@
                             }
 
                             if (done === 0) {
+                                $('#alert').append(
+                                    '<div class="alert fade in">' +
+                                    '<button type="button" class="close" data-dismiss="alert">×</button>' +
+                                    'Found a total of ' +
+                                    tags.length +
+                                    " module suggestions based on author's preferences. " +
+                                    'Showing <strong>Top 10</strong> recommendations.<br>' +
+                                    'Tag the modules you already know as favorites at MetaCPAN to refine the recommendation.' +
+                                    '</div>'
+                                );
+                                $('.alert').alert();
+
                                 tags = tags.sort(function (b, a) {
                                     var delta = bag[a] - bag[b];
                                     if (delta) {
@@ -246,10 +240,10 @@
                                     } else {
                                         return 0;
                                     }
-                                }).splice(0, 20).sort();
+                                }).splice(0, 10).sort();
 
                                 //console.log('%o', tags);
-                                on_user_recommendation(tags);
+                                process_dists(tags);
                             }
                         }
                     }
@@ -325,8 +319,6 @@
                     .done(function (data) {
                         window._gaq.push(['_trackEvent', 'query', 'user', pause_account]);
 
-                        $('#for-user').html('Processing...');
-
                         var favorites = [];
                         try {
                             favorites = data.favorite.hits.hits.map(function (obj) {
@@ -347,7 +339,6 @@
                                     "filter" : {
                                         "and" : [
                                             { "term" : { "author" : pause_account } },
-                                            { "term" : { "maturity" : "released" } },
                                             { "term" : { "status" : "latest" } }
                                         ]
                                     },
@@ -358,36 +349,68 @@
                                     "size" : 5000
                                 })
                             }
-                        }).done(function (data) {
-                            var dependencies = [];
-                            var releases = [];
-                            try {
-                                releases = data.hits.hits.map(function (obj) {
-                                    if (obj.fields.hasOwnProperty('dependency.module')) {
-                                        for (var i = 0; i < obj.fields['dependency.module'].length; i++) {
-                                            dependencies.push(cpan_dist_name(obj.fields['dependency.module'][i]));
+                        })
+                            .fail(function () {
+                                query_as_dists();
+                            })
+                            .done(function (data) {
+                                var dependencies = [];
+                                var releases = [];
+                                try {
+                                    releases = data.hits.hits.map(function (obj) {
+                                        if (obj.fields.hasOwnProperty('dependency.module')) {
+                                            for (var i = 0; i < obj.fields['dependency.module'].length; i++) {
+                                                dependencies.push(cpan_dist_name(obj.fields['dependency.module'][i]));
+                                            }
                                         }
-                                    }
-                                    return cpan_dist_name(obj.fields.distribution);
-                                });
-                            } catch (e) {
-                            }
-
-                            var dups = $.merge($.merge($.merge([], releases), dependencies), favorites).sort();
-                            favs = [];
-                            for (var j = 0; j < dups.length; j++) {
-                                if (dups[j] !== '' && dups[j] !== favs[favs.length - 1]) {
-                                    favs.push(dups[j]);
+                                        return cpan_dist_name(obj.fields.distribution);
+                                    });
+                                } catch (e) {
                                 }
-                            }
 
-                            //console.log('%o', favs);
-                            if (favs.length) {
-                                on_user_favorites();
-                            } else {
-                                $('#for-user').html('<span class="btn btn-warning btn-block">user has no preferred distributions!</span>');
-                            }
-                        });
+                                var dups = $.merge($.merge($.merge([], releases), dependencies), favorites).sort();
+                                favs = [];
+                                for (var j = 0; j < dups.length; j++) {
+                                    if (dups[j] !== '' && dups[j] !== favs[favs.length - 1]) {
+                                        favs.push(dups[j]);
+                                    }
+                                }
+
+                                //console.log('%o', favs);
+                                if (favs.length) {
+                                    $('#alert').append(
+                                        '<div class="alert fade in">' +
+                                        '<button type="button" class="close" data-dismiss="alert">×</button>' +
+                                        'Computing recommendation for ' +
+                                        '<a href="https://metacpan.org/author/' +
+                                        pause_account +
+                                        '" target="_blank">' +
+                                        pause_account +
+                                        '</a>, based on ' +
+                                        favs.length +
+                                        ' favorited, own and depended modules... (may take several seconds)' +
+                                        '</div>'
+                                    );
+                                    $('.alert').alert();
+
+                                    on_user_favorites();
+                                } else {
+                                    $('#alert').append(
+                                        '<div class="alert fade in">' +
+                                        '<button type="button" class="close" data-dismiss="alert">×</button>' +
+                                        'No preference data available for user ' +
+                                        '<a href="https://metacpan.org/author/' +
+                                        pause_account +
+                                        '" target="_blank">' +
+                                        pause_account +
+                                        '</a>' +
+                                        '</div>'
+                                    );
+                                    $('.alert').alert();
+
+                                    query_as_dists();
+                                }
+                            });
                     });
             } else {
                 query_as_dists();

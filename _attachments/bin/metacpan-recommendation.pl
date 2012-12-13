@@ -126,7 +126,7 @@ sub find_recommendations {
             if (my $sim = cosine_similarity($outer_bv => $inner_bv)) {
                 $sim{$inner} = (50 >= keys %{$item{$inner}})
                     ? $sim
-                    : 0;
+                    : 0.01;
             }
         }
 
@@ -135,7 +135,7 @@ sub find_recommendations {
             timestamp   => $timestamp,
             similar     => $_,
             relevance   => 0 + sprintf(q(%0.2f) => $sim{$_}),
-        }, rnkeytop { $sim{$_} } 10 => keys %sim;
+        }, rnkeytop { $sim{$_} } 20 => keys %sim;
     }
 
     return { docs => \@res };

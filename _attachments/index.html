@@ -29,7 +29,7 @@
                     <div class="nav-collapse collapse">
                         <ul class="nav">
                             <li class="active"><a href="#">Home</a></li>
-                            <li><a href="#leaderboard-modules">Leaderboard</a></li>
+                            <li><a href="#leaderboard-modules">Module list</a></li>
                             <li><a href="#disqus_thread">Comment</a></li>
                             <li class="dropdown">
                                 <a href="#" class="dropdown-toggle" data-toggle="dropdown">Support <b class="caret"></b></a>
@@ -52,7 +52,7 @@
                         <form id="query-recommendation" class="navbar-form pull-right">
                             <img id="loading" src="img/ajax-loader.gif" width="28" height="28" alt="Loading..." title="Loading..." />
                             <input id="cpanu-query" class="span2" type="text" placeholder="author/module" pattern="[A-Za-z0-9\:\-\_\,'&quot;\s]+">
-                            <button type="submit" class="btn">use CPAN::U</button>
+                            <button type="submit" class="btn">Recommend</button>
                         </form>
                     </div>
                 </div>
@@ -116,13 +116,7 @@
                 </div>
             </div>
 
-            <hr>
-
-            <p id="for-user">
-                Type your
-                <a href="http://pause.perl.org/" target="_blank">PAUSE</a>
-                account above and hit the <em>use CPAN::U</em> button!
-            </p>
+            <div id="alert"></div>
 
             <hr>
 
