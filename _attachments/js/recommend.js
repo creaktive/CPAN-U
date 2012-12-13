@@ -24,7 +24,7 @@
             dists = data;
             $.ajax({
                 type: 'POST',
-                url: 'https://api.metacpan.org/v0/release/_search',
+                url: 'https://api.metacpan.org/release/_search',
                 dataType: 'json',
                 data: {
                     source: JSON.stringify({
@@ -140,7 +140,7 @@
 
             $.ajax({
                 type: 'POST',
-                url: 'https://api.metacpan.org/v0/favorite/_search',
+                url: 'https://api.metacpan.org/favorite/_search',
                 dataType: 'json',
                 data: {
                     source: JSON.stringify({
@@ -269,7 +269,7 @@
             source: function (query, process) {
                 return $.ajax({
                     type: 'GET',
-                    url: 'https://api.metacpan.org/v0/search/autocomplete',
+                    url: 'https://api.metacpan.org/search/autocomplete',
                     dataType: 'json',
                     data: {
                         q: cpan_dist_name(query),
@@ -312,9 +312,12 @@
             if (query.match(new RegExp('^[A-Za-z]+$'))) {
                 pause_account = query.toUpperCase();
                 $.ajax({
-                    type: 'GET',
-                    url: 'https://api.metacpan.org/v0/author/' + pause_account + '?join=favorite&join=release',
-                    dataType: 'json'
+                    type: 'POST',
+                    url: 'https://api.metacpan.org/author/' + pause_account,
+                    dataType: 'json',
+                    data: {
+                        join: 'favorite'
+                    }
                 })
                     .fail(function () {
                         query_as_dists();
@@ -327,37 +330,64 @@
                         var favorites = [];
                         try {
                             favorites = data.favorite.hits.hits.map(function (obj) {
-                                return obj._source.distribution;
+                                return cpan_dist_name(obj._source.distribution);
                             });
                         } catch (e) {
                         }
 
-                        var dependencies = [];
-                        var releases = [];
-                        try {
-                            releases = data.release.hits.hits.map(function (obj) {
-                                for (var i = 0; i < obj._source.dependency.length; i++) {
-                                    dependencies.push(cpan_dist_name(obj._source.dependency[i].module));
-                                }
-                                return obj._source.distribution;
-                            });
-                        } catch (e) {
-                        }
-
-                        var dups = $.merge($.merge($.merge([], releases), dependencies), favorites).sort();
-                        favs = [];
-                        for (var j = 0; j < dups.length; j++) {
-                            if (dups[j] !== favs[favs.length - 1]) {
-                                favs.push(dups[j]);
+                        $.ajax({
+                            type: 'POST',
+                            url: 'https://api.metacpan.org/release/_search',
+                            dataType: 'json',
+                            data: {
+                                source: JSON.stringify({
+                                    "query" : {
+                                        "match_all" : {}
+                                    },
+                                    "filter" : {
+                                        "and" : [
+                                            { "term" : { "author" : pause_account } },
+                                            { "term" : { "maturity" : "released" } },
+                                            { "term" : { "status" : "latest" } }
+                                        ]
+                                    },
+                                    "fields" : [
+                                        "distribution",
+                                        "dependency.module"
+                                    ],
+                                    "size" : 5000
+                                })
                             }
-                        }
+                        }).done(function (data) {
+                            var dependencies = [];
+                            var releases = [];
+                            try {
+                                releases = data.hits.hits.map(function (obj) {
+                                    if (obj.fields.hasOwnProperty('dependency.module')) {
+                                        for (var i = 0; i < obj.fields['dependency.module'].length; i++) {
+                                            dependencies.push(cpan_dist_name(obj.fields['dependency.module'][i]));
+                                        }
+                                    }
+                                    return cpan_dist_name(obj.fields.distribution);
+                                });
+                            } catch (e) {
+                            }
 
-                        //console.log('%o', favs);
-                        if (favs.length) {
-                            on_user_favorites();
-                        } else {
-                            $('#for-user').html('<span class="btn btn-warning btn-block">user has no preferred distributions!</span>');
-                        }
+                            var dups = $.merge($.merge($.merge([], releases), dependencies), favorites).sort();
+                            favs = [];
+                            for (var j = 0; j < dups.length; j++) {
+                                if (dups[j] !== '' && dups[j] !== favs[favs.length - 1]) {
+                                    favs.push(dups[j]);
+                                }
+                            }
+
+                            //console.log('%o', favs);
+                            if (favs.length) {
+                                on_user_favorites();
+                            } else {
+                                $('#for-user').html('<span class="btn btn-warning btn-block">user has no preferred distributions!</span>');
+                            }
+                        });
                     });
             } else {
                 query_as_dists();
