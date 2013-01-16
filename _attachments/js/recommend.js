@@ -223,7 +223,7 @@
                                     'Found a total of ' +
                                     tags.length +
                                     " module suggestions based on author's preferences. " +
-                                    'Showing <strong>Top 10</strong> recommendations.<br>' +
+                                    'Showing <strong>Top 20</strong> recommendations.<br>' +
                                     'Tag the modules you already know as favorites at MetaCPAN to refine the recommendation.' +
                                     '</div>'
                                 );
@@ -240,7 +240,7 @@
                                     } else {
                                         return 0;
                                     }
-                                }).splice(0, 10).sort();
+                                }).splice(0, 20).sort();
 
                                 //console.log('%o', tags);
                                 process_dists(tags);
