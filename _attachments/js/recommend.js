@@ -266,7 +266,8 @@
                     url: 'https://api.metacpan.org/search/autocomplete',
                     dataType: 'json',
                     data: {
-                        q: cpan_dist_name(query),
+                        q: 'status:latest mime:text/x-script.perl-module ' + cpan_dist_name(query),
+                        fields: 'distribution',
                         size: 10
                     }
                 }).done(function (data) {
