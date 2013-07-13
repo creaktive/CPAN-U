@@ -23,7 +23,7 @@
         function process_dists (data) {
             dists = data;
             $.ajax({
-                type: 'POST',
+                type: 'GET',
                 url: 'https://api.metacpan.org/release/_search',
                 dataType: 'json',
                 data: {
@@ -150,7 +150,7 @@
             lock_input();
 
             $.ajax({
-                type: 'POST',
+                type: 'GET',
                 url: 'https://api.metacpan.org/favorite/_search',
                 dataType: 'json',
                 data: {
@@ -307,7 +307,7 @@
             if (query.match(new RegExp('^[A-Za-z]+$'))) {
                 pause_account = query.toUpperCase();
                 $.ajax({
-                    type: 'POST',
+                    type: 'GET',
                     url: 'https://api.metacpan.org/author/' + pause_account,
                     dataType: 'json',
                     data: {
@@ -329,7 +329,7 @@
                         }
 
                         $.ajax({
-                            type: 'POST',
+                            type: 'GET',
                             url: 'https://api.metacpan.org/release/_search',
                             dataType: 'json',
                             data: {
